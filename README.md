@@ -15,21 +15,31 @@ It doesn't just look up prices. It knows which prices you're not allowed to comp
 Ask your agent *"200 short videos a month, 720p, on Volcengine — what's the yearly cost?"* and it runs:
 
 ```
-$ cost estimate — 200 clips × 720p / 5s
+Cost: 200 clips × 720p / 5.0s → **496.80 CNY**
 
-  Model         seedance-2.0-mini
-  Spec          720p / 24fps / 5s
-  Tokens        108,000  →  ¥2.48 / clip
-  200 clips     ¥496.80 / month
+Pricing basis: compute cost | snapshot 2026-07-20 (6 days old)
 
-  Rate limit    RPM 180, concurrency 3 (personal tier)
-                ≈ 180 clips/hour ceiling — 200/month fits fine
+Unit price breakdown
+| Item | Value |
+|---|---|
+| Model | seedance-2.0-mini |
+| Spec | 720p (1280x720) / 24fps / 5.0s |
+| Pricing basis | without input video |
+| Usage | 108,000 tokens |
+| Unit price | 23.00 CNY/1M tokens |
+| Per clip | 2.48 CNY |
+| × 200 clips | **496.80 CNY** |
 
-  SKU status    active
+Rate limit (personal account)
+Max RPM 180 | concurrency 3
+Estimated at 1 minute per clip: theoretical ceiling ≈ 180 clips/hour
 
-  NOT included  · creative & scripting
-                · review, reshoots, compliance
-                · subtitles & localization
+SKU status
+seedance-2.0-mini active
+
+NOT included
+- Creative and scripting, review and reshoots, compliance, subtitles, and localization
+- Failed generations are not billed; successful retry attempts are billed per clip
 ```
 
 Notice what it does without being asked: checks whether you can even *run* the volume (rate limit), flags what the token cost leaves out (the real money), and confirms the SKU isn't being sunset. That's the difference between a price and an estimate.
