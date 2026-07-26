@@ -9,9 +9,9 @@ from pathlib import Path
 CATALOG = Path(__file__).resolve().parent.parent / "references" / "infrastructure_prices.json"
 
 def main():
-    ap = argparse.ArgumentParser(description="GPU、实例与预留吞吐成本计算器")
-    ap.add_argument("--sku", help="完整或唯一 SKU 名称")
-    ap.add_argument("--units", type=float, default=1, help="按条目的 billing_unit 计的数量")
+    ap = argparse.ArgumentParser(description="GPU, instance, and reserved-throughput cost calculator")
+    ap.add_argument("--sku", help="Full or unique SKU name")
+    ap.add_argument("--units", type=float, default=1, help="Quantity in the item's billing_unit")
     ap.add_argument("--list", action="store_true")
     a = ap.parse_args()
     d = json.load(CATALOG.open(encoding="utf-8"))
@@ -21,21 +21,21 @@ def main():
             print(f"{x['provider']}/{x['service']}/{x['sku']} [{rate}/{x['billing_unit']}; {x['purchase_mode']}]")
         return
     if not a.sku:
-        ap.error("--sku 必填（或使用 --list）")
+        ap.error("--sku is required (or use --list)")
     candidates = [x for x in d["items"] if a.sku.casefold() in f"{x['provider']}/{x['service']}/{x['sku']}".casefold()]
     if len(candidates) != 1:
-        print("错误：SKU 不唯一或不存在：\n  " + "\n  ".join(f"{x['provider']}/{x['service']}/{x['sku']}" for x in candidates), file=sys.stderr)
+        print("Error: SKU is ambiguous or not found:\n  " + "\n  ".join(f"{x['provider']}/{x['service']}/{x['sku']}" for x in candidates), file=sys.stderr)
         sys.exit(2)
     x = candidates[0]
     if x["rate"] is None:
-        print("错误：该 SKU 官方未公开匿名静态价，不能估算。", file=sys.stderr)
+        print("No public price — returned as null, not estimated.", file=sys.stderr)
         sys.exit(2)
     total = a.units * x["rate"]
-    print(f"【基础设施成本】{total:.6f} {x['currency']}")
-    print(f"口径：{x['provider']}/{x['service']}/{x['sku']} ｜ {a.units:g} × {x['billing_unit']} × {x['rate']:g}")
-    print(f"区域/购买模式：{x['region']} / {x['purchase_mode']}")
-    print(f"完整性：{'该 SKU 的实例/容量费完整' if x['total_price_complete'] else '不完整；须按注释追加其他资源'}")
-    print(f"来源：{x['source']}\n注意：{x['note']}")
+    print(f"Infrastructure cost: {total:.6f} {x['currency']}")
+    print(f"Pricing basis: {x['provider']}/{x['service']}/{x['sku']} | {a.units:g} × {x['billing_unit']} × {x['rate']:g}")
+    print(f"Region/purchase mode: {x['region']} / {x['purchase_mode']}")
+    print(f"Completeness: {'Complete instance/capacity price' if x['total_price_complete'] else 'Incomplete; add other resources as noted in the catalog'}")
+    print(f"Source: {x['source']}\nNote: See the catalog entry for scope details.")
 
 if __name__ == "__main__":
     main()

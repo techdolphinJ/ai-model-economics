@@ -101,26 +101,26 @@ def staleness():
 def compute(model, res, out_dur, in_dur=0.0, audio=False, count=1, account="个人"):
     spec = MODELS[model]
     if res not in spec["res"]:
-        return None, f"{model} 不支持 {res}（支持：{'/'.join(spec['res'])}）"
+        return None, f"{model} does not support {res} (supported: {'/'.join(spec['res'])})"
 
     lo, hi = spec["duration"]
     warn = []
     if not (lo <= out_dur <= hi):
-        warn.append(f"时长 {out_dur}s 超出 {model} 支持范围 {lo}~{hi}s")
+        warn.append(f"Duration {out_dur}s is outside {model}'s supported range of {lo}–{hi}s")
 
     w, h, approx = RES[res]
     tokens = (in_dur + out_dur) * w * h * FPS / 1024
 
     if spec.get("price_axis") == "audio":
         unit = spec["prices"][res][0 if audio else 1]
-        basis = "有声" if audio else "无声"
+        basis = "with audio" if audio else "without audio"
     else:
         unit = spec["prices"][res][1 if in_dur > 0 else 0]
-        basis = "输入含视频" if in_dur > 0 else "输入不含视频"
+        basis = "with input video" if in_dur > 0 else "without input video"
 
     price = tokens / 1_000_000 * unit
     if approx:
-        warn.append("480p 为近似值，官方示例约高 4%")
+        warn.append("480p is an estimate; official examples are approximately 4% higher")
 
     key = "4k" if res == "4k" and "4k" in spec["rpm"] else "default"
     idx = 1 if account == "个人" else 0
@@ -137,26 +137,26 @@ def compute(model, res, out_dur, in_dur=0.0, audio=False, count=1, account="个�
 
 
 def main():
-    p = argparse.ArgumentParser(description="火山方舟视频生成成本计算器")
+    p = argparse.ArgumentParser(description="Volcengine Ark video-generation cost calculator")
     p.add_argument("--model", default="seedance-2.0")
     p.add_argument("--res", default="720p", choices=list(RES))
-    p.add_argument("--duration", type=float, default=5, help="输出视频秒数")
-    p.add_argument("--input-duration", type=float, default=0, help="输入视频秒数，文生视频填 0")
-    p.add_argument("--audio", action="store_true", help="仅 seedance-1.5-pro：输出含声音")
-    p.add_argument("--count", type=int, default=1, help="条数")
+    p.add_argument("--duration", type=float, default=5, help="Output-video duration in seconds")
+    p.add_argument("--input-duration", type=float, default=0, help="Input-video duration in seconds; use 0 for text-to-video")
+    p.add_argument("--audio", action="store_true", help="seedance-1.5-pro only: include audio")
+    p.add_argument("--count", type=int, default=1, help="Clip count")
     p.add_argument("--account", default="个人", choices=["个人", "企业"])
-    p.add_argument("--list", action="store_true", help="列出所有型号")
+    p.add_argument("--list", action="store_true", help="List all models")
     a = p.parse_args()
 
     if a.list:
-        print(f"火山视频型号（快照 {SNAPSHOT}）\n")
+        print(f"Volcengine video models (snapshot {SNAPSHOT})\n")
         for m, s in MODELS.items():
-            tag = "  ⚠️ 即将下线" if s["retiring"] else ""
+            tag = "  ⚠️ sunsetting" if s["retiring"] else ""
             print(f"  {m:<20} {'/'.join(s['res']):<28} {s['duration'][0]}~{s['duration'][1]}s{tag}")
         return
 
     if a.model not in MODELS:
-        print(f"未知型号 {a.model}。可用：{', '.join(MODELS)}", file=sys.stderr)
+        print(f"Unknown model {a.model}. Available: {', '.join(MODELS)}", file=sys.stderr)
         sys.exit(1)
 
     r, err = compute(a.model, a.res, a.duration, a.input_duration,
@@ -167,51 +167,51 @@ def main():
 
     days, stale = staleness()
     if stale:
-        print(f"⚠️ 报价快照 {SNAPSHOT}，距今 {days} 天。数字仅供量级参考，正式报价须重新抓取。\n")
+        print(f"⚠️ Snapshot {SNAPSHOT} is {days} days old. This is directional only; refresh official pricing before formal quoting.\n")
 
-    print(f"【成本】{a.count} 条 × {a.res} / {a.duration}s → **{r['total']:.2f} 元**")
-    print(f"\n口径：算力成本 ｜ 快照 {SNAPSHOT}（距今 {days} 天）\n")
-    print("单价拆解")
-    print("| 项 | 值 |")
+    print(f"Cost: {a.count} clips × {a.res} / {a.duration}s → **{r['total']:.2f} CNY**")
+    print(f"\nPricing basis: compute cost | snapshot {SNAPSHOT} ({days} days old)\n")
+    print("Unit price breakdown")
+    print("| Item | Value |")
     print("|---|---|")
-    print(f"| 型号 | {a.model} |")
-    print(f"| 规格 | {a.res} ({r['dims']}) / {FPS}fps / {a.duration}s |")
-    print(f"| 计价口径 | {r['basis']} |")
-    print(f"| token 用量 | {r['tokens']:,.0f} |")
-    print(f"| token 单价 | {r['unit']:.2f} 元/百万 |")
-    print(f"| 单条 | {r['unit_price']:.2f} 元 |")
-    print(f"| × {a.count} 条 | **{r['total']:.2f} 元** |")
+    print(f"| Model | {a.model} |")
+    print(f"| Spec | {a.res} ({r['dims']}) / {FPS}fps / {a.duration}s |")
+    print(f"| Pricing basis | {r['basis']} |")
+    print(f"| Usage | {r['tokens']:,.0f} tokens |")
+    print(f"| Unit price | {r['unit']:.2f} CNY/1M tokens |")
+    print(f"| Per clip | {r['unit_price']:.2f} CNY |")
+    print(f"| × {a.count} clips | **{r['total']:.2f} CNY** |")
 
-    print(f"\n限流校验（{a.account}账号）")
-    print(f"最大 RPM {r['rpm']} ｜ 最大并发 {r['concurrency']}")
+    print(f"\nRate limit ({'personal' if a.account == '个人' else 'enterprise'} account)")
+    print(f"Max RPM {r['rpm']} | concurrency {r['concurrency']}")
     if r["concurrency"] <= 1:
-        print("⚠️ 并发为 1，只能串行，不适合批量生产")
+        print("⚠️ concurrency is 1: serial generation only; unsuitable for batch production")
     else:
-        print(f"按单条生成 1 分钟估：理论上限约 {r['concurrency'] * 60} 条/小时")
+        print(f"Estimated at 1 minute per clip: theoretical ceiling ≈ {r['concurrency'] * 60} clips/hour")
 
-    print("\nSKU 状态")
+    print("\nSKU status")
     if r["retiring"]:
-        print(f"⚠️ {a.model} 即将下线，勿用于 6 个月以上的成本模型")
+        print(f"⚠️ {a.model} is sunsetting; do not use it for cost models longer than 6 months")
         if r["replacement"]:
             alt, _ = compute(r["replacement"], a.res, a.duration,
                              a.input_duration, a.audio, a.count, a.account)
             if alt:
                 mult = alt["total"] / r["total"] if r["total"] else 0
-                print(f"   在架替代：{r['replacement']} → {alt['total']:.2f} 元（×{mult:.1f}）")
+                print(f"   Active replacement: {r['replacement']} → {alt['total']:.2f} CNY (×{mult:.1f})")
     else:
-        print(f"{a.model} 在架")
+        print(f"{a.model} active")
 
     for w in r["warn"]:
-        print(f"\n注：{w}")
+        print(f"\nNote: {w}")
 
     off = MODELS[a.model].get("offline")
     if off:
-        print(f"\n离线推理档可用：单价 {off:.2f} 元/百万 → 单条 {r['tokens']/1e6*off:.2f} 元"
-              f"（× {a.count} = {r['tokens']/1e6*off*a.count:.2f} 元），非实时场景优先用")
+        print(f"\nOffline inference available: Unit price {off:.2f} CNY/1M tokens → per clip {r['tokens']/1e6*off:.2f} CNY"
+              f" (× {a.count} = {r['tokens']/1e6*off*a.count:.2f} CNY). Prefer it for non-real-time workloads.")
 
-    print("\n未计入")
-    print("- 创意与脚本、审片与返工、合规过审、字幕与本地化")
-    print("- 生成失败不计费，但重试产生的成功件按次计")
+    print("\nNOT included")
+    print("- Creative and scripting, review and reshoots, compliance, subtitles, and localization")
+    print("- Failed generations are not billed; successful retry attempts are billed per clip")
 
 
 if __name__ == "__main__":
