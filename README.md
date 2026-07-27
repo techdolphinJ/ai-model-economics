@@ -14,9 +14,41 @@ It also records officially documented regional availability without conflating t
 
 For current-price SKUs with qualifying official evidence, it also keeps a separate historical price note: effective date, exact before/after rate, and official provenance. A SKU without that note still has a complete current-price snapshot; historical evidence is supplementary, not a coverage requirement.
 
-## Demo
+## Demo 1 — annual text workload
 
-Ask your agent *"200 short videos a month, 720p, on Volcengine — what's the yearly cost?"* and it runs:
+A support-automation system running 12M tickets a year on Claude — what does it actually cost, and can the rate limits even handle it?
+
+Ask your agent *"We process 12 million support tickets a year. Each call uses 2,000 input tokens and 500 output tokens on Claude Sonnet 4.6. We run eight hours a day across 250 business days. What is the annual compute cost, and will the Scale-tier rate limit handle it?"* It runs the calculator for the token totals, then checks the SKU's public rate-limit record:
+
+```
+Cost: 162000.000000 USD
+Pricing basis: Anthropic/Direct API/Claude Sonnet 4.6 | standard | snapshot 2026-07-21 (6 days old)
+| Item | Usage | Unit price | Subtotal |
+|---|---:|---:|---:|
+| Uncached input | 24,000,000,000 tokens | 3 USD/1M tokens | 72000.000000 USD |
+| Cached input | 0 tokens | 0.3 USD/1M tokens | 0.000000 USD |
+| Output | 6,000,000,000 tokens | 15 USD/1M tokens | 90000.000000 USD |
+
+Source: https://platform.claude.com/docs/en/about-claude/pricing
+
+Rate limit check (public Scale tier)
+Required: 100 RPM | 200K input TPM | 50K output TPM
+Published maximum: 1,000 RPM | 2M input TPM | 400K output TPM
+Result: within the published Scale-tier limits. Actual organization limits may differ.
+
+SKU status
+Claude Sonnet 4.6 current
+
+NOT included
+- Prompt-cache write charges (no cached input was assumed)
+- Evaluation, human review, escalation handling, integration, compliance, and any rework
+```
+
+The $162,000 is compute cost, not the operating cost of a support workflow. The dated snapshot and lifecycle check stay in the answer, because an annual budget becomes misleading the moment either expires.
+
+## Demo 2 — video pricing
+
+The same tool also handles a token-priced video workload. Ask your agent *"200 short videos a month, 720p, on Volcengine — what's the yearly cost?"* and it runs:
 
 ```
 Cost: 200 clips × 720p / 5.0s → **496.80 CNY**
@@ -46,7 +78,7 @@ NOT included
 - Failed generations are not billed; successful retry attempts are billed per clip
 ```
 
-Notice what it does without being asked: checks whether you can even *run* the volume (rate limit), flags what the token cost leaves out (the real money), and confirms the SKU isn't being sunset. That's the difference between a price and an estimate.
+Both examples check whether the volume can actually run, distinguish compute from delivery cost, and confirm that the selected SKU is not being sunset. That's the difference between a price and an estimate.
 
 ## Key features
 
