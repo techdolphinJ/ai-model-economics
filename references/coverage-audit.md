@@ -9,6 +9,8 @@
 | 按量文本 token | `model_prices.json` | `scripts/model_cost.py` | 54 个 SKU：直连模型、云托管路由、开源模型网关、带请求附加费的搜索模型 |
 | GPU/实例/预留吞吐 | `infrastructure_prices.json` | `scripts/infrastructure_cost.py` | AWS Capacity Blocks、Azure PAYG VM、GCP GPU/整机、阿里 PTU、百度算力单元、华为价格空值 |
 | 火山多模态/Agent/RAG | `volcengine.md` | `scripts/video_cost.py` | 文本、视频、图片、3D、Agent、工具、知识库、限流、下线 |
+| 区域可用性 | `regional_availability.json` | `scripts/regional_availability.py` | 与定价目录相同的 22 个供应商；账户接入地与服务部署地独立记录 |
+| 当前价格调价历史附注 | `pricing_history.json` | `scripts/pricing_history.py` | 当前价的可选注脚；仅收录有官方生效日、调整前后精确价格的事件，无附注不影响当前价覆盖 |
 
 ## 厂商覆盖（文字模型）
 
@@ -35,3 +37,6 @@
 3. `total_price_complete: false` 的基础设施 SKU 只能作为组件费；输出必须提示仍需计算 VM/存储/网络/OS 等成本。
 4. `preview`、`deprecated`、`temporary-price`、`legacy-route` 不能成为超过 6 个月的默认架构基准。
 5. 过 90 天自动告警；正式客户报价必须刷新页面并记录变更。
+6. 区域可用性只接受官方文档或服务条款。账户国家/地区 allowlist 与云服务部署区域不得互推；没有官方来源的供应商保留 `pending_official_source`，不作可用或受限判断。
+7. 定价变动历史是当前价格快照的可选官方附注，与当前价格独立保存。每个 SKU 的事件数组按不可变 `effective_date` 排序；事件必须有价格单位、调整前后精确值、官方标题、URL 和访问日期。
+8. 历史页面或公告缺少生效日、调整前价格或调整后价格时，不补推、不引用第三方转述；保留 `pending_official_source`。这不构成当前价格覆盖缺口。历史记录只陈述价格事实，不解释厂商动机。

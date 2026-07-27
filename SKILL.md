@@ -1,6 +1,6 @@
 ---
 name: cost-model
-description: AI 模型调用与 agent 运行的成本核算。当对话涉及「跑这个要多少钱」「用哪个模型划算」「token 单价」「限流 / RPM / 并发够不够」「文生视频 / 图生视频报价」「批量推理折扣」「给客户报价里的 AI 算力那部分」，或任何需要把「用哪个模型」换算成「多少钱、能跑多快」的场景时使用。含核算方法、口径规则、报价失效检查、54 个文本 API/网关 SKU，以及 GPU、实例和预留吞吐公开快照。只要提到成本、报价、预算、划不划算、够不够跑、贵不贵，就该用这个 skill——即使没明说要核算。
+description: AI 模型调用与 agent 运行的成本核算。当对话涉及「跑这个要多少钱」「用哪个模型划算」「token 单价」「限流 / RPM / 并发够不够」「文生视频 / 图生视频报价」「批量推理折扣」「区域可用性 / 出海能否接入」「历史调价 / 价格何时变了」「给客户报价里的 AI 算力那部分」，或任何需要把「用哪个模型」换算成「多少钱、能跑多快、官方声明在哪些地区可用、当前价是否附有可溯源的历史调价注脚」的场景时使用。含核算方法、口径规则、报价失效检查、54 个文本 API/网关 SKU、区域可用性，以及当前价格快照的 SKU 历史调价附注和 GPU、实例、预留吞吐公开快照。只要提到成本、报价、预算、划不划算、够不够跑、贵不贵、区域可用性、历史调价，就该用这个 skill——即使没明说要核算。
 ---
 
 # 成本核算
@@ -86,6 +86,34 @@ description: AI 模型调用与 agent 运行的成本核算。当对话涉及「
 
 **问到没有快照的厂商** → 直接说「本 skill 尚无该厂商快照」。**不要凭记忆报价**——模型定价是变动最快的一类事实，记忆里的数几乎一定是旧的。
 
+## 区域可用性：先分清两个问题
+
+「某国能否开户/调用」与「请求由哪个服务区域处理」不是同一个事实，禁止相互推导。
+
+- **账户接入地**：只有厂商公开 country/territory allowlist 时，才能说某地受支持或不受支持。
+- **服务部署地**：云厂商的 region / deployment matrix 只能证明服务或模型在该区域可部署；它不证明任意国家主体都能开户。
+- **无公开来源**：输出 `pending_official_source`。这表示本快照尚未收录可核验来源，**不表示可用或不可用**。
+
+区域数据一律读取 `references/regional_availability.json`，每条已确认记录必须保留官方 URL、来源标题与访问日期。不要用 IP 测试、第三方清单或营销文章补全空项。
+
+## 定价历史附注：不改写当前快照
+
+定价历史不是与区域可用性并列的覆盖维度，而是当前价格快照的**官方调价历史附注**。当前价格读取 `references/model_prices.json`；有符合条件历史证据的 SKU 再读取 `references/pricing_history.json`。历史事件不得回填当前价格，也不得把当前价倒推为“调整前价格”。没有历史附注只表示该 SKU 的当前价没有可收录的官方历史事件，**不表示当前价格数据缺失**。
+
+- 每个 SKU 的 `events` 是按不可变 `effective_date` 排序的数组。每个事件必须同时有精确的调整前/后价格、单位、官方来源标题、URL 与访问日期。
+- 来源页面没有同时给出生效日与前后精确价格时，保留 `pending_official_source` 或空数组；这不是当前价格快照的缺口。不以第三方报道、网页缓存、相邻 SKU 或折扣比例补齐。
+- 官方公告中嵌入的官方价目图可以作为同页证据，来源仍写公告页 URL，并明确标注为嵌入价表。
+- 输出仅陈述何时、按什么单位、从多少变为多少；不把调价解释为竞争策略或市场信号。
+
+用 `scripts/pricing_history.py` 查询和验证：
+
+```
+python3 scripts/pricing_history.py --list
+python3 scripts/pricing_history.py --vendor 'Moonshot AI'
+python3 scripts/pricing_history.py --sku qwen-max
+python3 scripts/pricing_history.py --validate
+```
+
 ---
 
 ## 输出格式
@@ -139,6 +167,8 @@ SKU 状态
 | 多厂商文本 API | `references/multivendor-text-api.md` | 2026-07-21 | 22 个厂商/云路由，54 个公开按量文本 SKU；单价 / 缓存 / 批处理 / 请求附加费 / 限流 / 生命周期 |
 | 云基础设施/吞吐 | `references/infrastructure_prices.json` | 2026-07-21 | AWS/Azure/GCP GPU、阿里 PTU、百度算力单元，以及华为公开价空值边界 |
 | 覆盖审计 | `references/coverage-audit.md` | 2026-07-21 | 覆盖清单、已知空值、跨路由/购买模式不混算规则 |
+| 区域可用性 | `references/regional_availability.json` | 2026-07-27 | 22 个既有供应商；账户接入地与服务部署地分开记录；无官方来源显式待补充 |
+| 当前价格调价历史附注 | `references/pricing_history.json` | 2026-07-27 | 19 个官方 SKU 调价事件；仅为有可溯源历史的当前价格附注，无附注不影响当前价覆盖 |
 
 机器可读的真源是 `references/model_prices.json`。它明确分开币种、路由、区域和服务档；没有写出的静态价格就是 `null`，不得以直连价、历史价或折扣比例代替。
 
@@ -154,12 +184,24 @@ SKU 状态
 
 `scripts/infrastructure_cost.py` — GPU、实例、预留吞吐与算力单元计算器。它会明确标记价格是否已覆盖完整实例成本；不完整的 GPU-only 项不能当总成本。
 
+`scripts/regional_availability.py` — 区域可用性查询器。它只展示官方来源已确认的记录；可按厂商或国家代码查看，`--validate` 会检查供应商覆盖与来源字段完整性。
+
+`scripts/pricing_history.py` — 当前价格的 SKU 历史调价附注查询器。它只展示带生效日、精确前后价格和官方来源的事件；需与当前价格目录按 SKU 分别查阅，不参与成本计算或补全当前价。可按厂商或 SKU 查询，`--validate` 会检查事件数组、日期顺序和来源字段完整性。
+
 ```
 python3 scripts/model_cost.py --list
 python3 scripts/model_cost.py --model 'OpenAI/Direct API/gpt-5.6-terra' --input-tokens 1000000 --cached-input-tokens 400000 --output-tokens 200000 --mode batch
 python3 scripts/model_cost.py --model 'Tencent Cloud/TokenHub/hy3' --input-tokens 1000000 --cached-input-tokens 500000 --output-tokens 250000
 python3 scripts/model_cost.py --model 'Perplexity/Sonar/sonar (low search context)' --input-tokens 1000000 --output-tokens 200000 --requests 1000
 python3 scripts/infrastructure_cost.py --sku 'p5.4xlarge' --units 24
+python3 scripts/regional_availability.py --list
+python3 scripts/regional_availability.py --vendor OpenAI
+python3 scripts/regional_availability.py --country CN
+python3 scripts/regional_availability.py --validate
+python3 scripts/pricing_history.py --list
+python3 scripts/pricing_history.py --vendor 'Moonshot AI'
+python3 scripts/pricing_history.py --sku qwen-max
+python3 scripts/pricing_history.py --validate
 ```
 
 ```

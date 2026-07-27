@@ -1,0 +1,355 @@
+{
+  "schema_version": "1.0",
+  "snapshot_date": "2026-07-27",
+  "maintenance": "manual_official_source_review",
+  "scope": "Officially documented public API price-change events. This is a historical event catalog, not a current-price source and not a market interpretation.",
+  "rules": [
+    "Store an event only when an official source states or visibly tabulates its effective date and both before and after prices.",
+    "Preserve the provider's pricing unit and route; do not normalize currency, routes, purchase modes, or price basis.",
+    "A pending provider makes no claim that it has never changed price; it only records that this snapshot has no qualifying official event."
+  ],
+  "status_definitions": {
+    "sourced": "At least one SKU history contains a price-change event with official source title, URL, and access date.",
+    "pending_official_source": "No qualifying official before-and-after price event was reviewed for this snapshot."
+  },
+  "providers": [
+    {
+      "vendor": "Volcengine",
+      "routes": ["Ark"],
+      "coverage_status": "pending_official_source",
+      "pending_reason": "Reviewed official Ark documentation and billing/price entry points. No official historical announcement or archived price page was found that states both before and after prices for an Ark SKU.",
+      "sku_histories": []
+    },
+    {
+      "vendor": "Moonshot AI",
+      "routes": ["Kimi API"],
+      "coverage_status": "sourced",
+      "sku_histories": [
+        {
+          "sku_id": "legacy-8k-pricing-group",
+          "applies_to": ["kimi-latest-8k", "moonshot-v1-8k", "moonshot-v1-8k-vision-preview"],
+          "currency": "CNY",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-legacy-8k",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"all_tokens": 12},
+              "after": {"input": 2, "output": 10},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "legacy-32k-pricing-group",
+          "applies_to": ["kimi-latest-32k", "moonshot-v1-32k", "moonshot-v1-32k-vision-preview"],
+          "currency": "CNY",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-legacy-32k",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"all_tokens": 24},
+              "after": {"input": 5, "output": 20},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "legacy-128k-pricing-group",
+          "applies_to": ["kimi-latest-128k", "moonshot-v1-128k", "moonshot-v1-128k-vision-preview"],
+          "currency": "CNY",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-legacy-128k",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"all_tokens": 60},
+              "after": {"input": 10, "output": 30},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "context-cache-create",
+          "currency": "CNY",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-cache-create",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"price": 24},
+              "after": {"price": 4},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after context-cache price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "context-cache-storage",
+          "currency": "CNY",
+          "unit": "per_1M_tokens_per_minute",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-cache-storage",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"price": 5},
+              "after": {"price": 1},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after context-cache price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "context-cache-call",
+          "currency": "CNY",
+          "unit": "per_request",
+          "events": [
+            {
+              "event_id": "moonshot-2025-04-07-cache-call",
+              "effective_date": "2025-04-07",
+              "event_status": "effective",
+              "before": {"price": 0.02},
+              "after": {"price": 0.01},
+              "source": {
+                "publisher": "Moonshot AI",
+                "title": "Kimi 开放平台产品价格调整通知",
+                "url": "https://platform.kimi.com/blog/posts/discount",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post with embedded before-and-after context-cache price table."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor": "Zhipu AI",
+      "routes": ["BigModel China"],
+      "coverage_status": "pending_official_source",
+      "pending_reason": "Reviewed BigModel/Z.AI pricing and developer-documentation entry points. No official historical page or announcement was found with an effective date plus exact before-and-after prices for the same domestic API SKU.",
+      "sku_histories": []
+    },
+    {
+      "vendor": "MiniMax",
+      "routes": ["Direct API"],
+      "coverage_status": "pending_official_source",
+      "pending_reason": "Reviewed MiniMax API pricing overview, pay-as-you-go documentation, and official news/documentation indexes. No qualifying official before-and-after API price event was found.",
+      "sku_histories": []
+    },
+    {
+      "vendor": "Alibaba Cloud",
+      "routes": ["Model Studio Global"],
+      "coverage_status": "sourced",
+      "sku_histories": [
+        {
+          "sku_id": "qwen-max",
+          "currency": "CNY",
+          "unit": "per_1K_tokens",
+          "events": [
+            {
+              "event_id": "alibaba-2025-02-07-qwen-max",
+              "effective_date": "2025-02-07",
+              "event_status": "effective",
+              "before": {"standard_input": 0.02, "standard_output": 0.06, "batch_input": 0.01, "batch_output": 0.03},
+              "after": {"standard_input": 0.0024, "standard_output": 0.0096, "batch_input": 0.0012, "batch_output": 0.0048},
+              "source": {
+                "publisher": "Alibaba Cloud",
+                "title": "Model Studio release notes",
+                "url": "https://help.aliyun.com/zh/model-studio/model-release-notes",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official 2025-02-07 pricing release-note entry states the before-and-after real-time and Batch rates."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vendor": "OpenAI",
+      "routes": ["Direct API"],
+      "coverage_status": "sourced",
+      "sku_histories": [
+        {
+          "sku_id": "davinci",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-davinci", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.06}, "after": {"price": 0.02}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "curie",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-curie", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.006}, "after": {"price": 0.002}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "babbage",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-babbage", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.0012}, "after": {"price": 0.0005}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "ada",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-ada", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.0008}, "after": {"price": 0.0004}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "davinci-embeddings",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-davinci-embeddings", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.6}, "after": {"price": 0.2}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "curie-embeddings",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-curie-embeddings", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.06}, "after": {"price": 0.02}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "babbage-embeddings",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-babbage-embeddings", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.012}, "after": {"price": 0.005}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        },
+        {
+          "sku_id": "ada-embeddings",
+          "currency": "USD",
+          "unit": "per_1K_tokens",
+          "events": [{"event_id": "openai-2022-09-01-ada-embeddings", "effective_date": "2022-09-01", "event_status": "effective", "before": {"price": 0.008}, "after": {"price": 0.004}, "source": {"publisher": "OpenAI", "title": "The OpenAI API is now more affordable", "url": "https://community.openai.com/t/the-openai-api-is-now-more-affordable/20432", "accessed_date": "2026-07-27", "evidence": "Official OpenAI Developer Community announcement table."}}]
+        }
+      ]
+    },
+    {
+      "vendor": "Anthropic",
+      "routes": ["Direct API"],
+      "coverage_status": "pending_official_source",
+      "pending_reason": "Reviewed official Claude news, pricing documentation, and model announcements. Current and scheduled prices were found, but no reviewed historical event stated both exact before and after prices for the same direct-API SKU.",
+      "sku_histories": []
+    },
+    {
+      "vendor": "Google",
+      "routes": ["Gemini Developer API"],
+      "coverage_status": "sourced",
+      "sku_histories": [
+        {
+          "sku_id": "gemini-1.5-flash-lt-128k",
+          "currency": "USD",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "google-2024-08-12-gemini-1.5-flash-lt-128k",
+              "effective_date": "2024-08-12",
+              "event_status": "effective",
+              "before": {"input": 0.35, "output": 1.05, "cached_input": 0.0875},
+              "after": {"input": 0.075, "output": 0.3, "cached_input": 0.01875},
+              "source": {
+                "publisher": "Google",
+                "title": "Gemini 1.5 Flash price drop, tuning rollout complete, and more",
+                "url": "https://developers.googleblog.com/en/gemini-15-flash-updates-google-ai-studio-gemini-api/",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post and embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "gemini-1.5-flash-gt-128k",
+          "currency": "USD",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "google-2024-08-12-gemini-1.5-flash-gt-128k",
+              "effective_date": "2024-08-12",
+              "event_status": "effective",
+              "before": {"input": 0.7, "output": 2.1, "cached_input": 0.175},
+              "after": {"input": 0.15, "output": 0.6, "cached_input": 0.0375},
+              "source": {
+                "publisher": "Google",
+                "title": "Gemini 1.5 Flash price drop, tuning rollout complete, and more",
+                "url": "https://developers.googleblog.com/en/gemini-15-flash-updates-google-ai-studio-gemini-api/",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post and embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "gemini-1.5-pro-lt-128k",
+          "currency": "USD",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "google-2024-10-01-gemini-1.5-pro-lt-128k",
+              "effective_date": "2024-10-01",
+              "event_status": "effective",
+              "before": {"input": 3.5, "output": 10.5},
+              "after": {"input": 1.25, "output": 5},
+              "source": {
+                "publisher": "Google",
+                "title": "Updated production-ready Gemini models, reduced 1.5 Pro pricing, increased rate limits, and more",
+                "url": "https://developers.googleblog.com/en/updated-gemini-models-reduced-15-pro-pricing-increased-rate-limits-and-more/",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post and embedded before-and-after price table."
+              }
+            }
+          ]
+        },
+        {
+          "sku_id": "gemini-1.5-pro-gt-128k",
+          "currency": "USD",
+          "unit": "per_1M_tokens",
+          "events": [
+            {
+              "event_id": "google-2024-10-01-gemini-1.5-pro-gt-128k",
+              "effective_date": "2024-10-01",
+              "event_status": "effective",
+              "before": {"input": 7, "output": 21},
+              "after": {"input": 2.5, "output": 10},
+              "source": {
+                "publisher": "Google",
+                "title": "Updated production-ready Gemini models, reduced 1.5 Pro pricing, increased rate limits, and more",
+                "url": "https://developers.googleblog.com/en/updated-gemini-models-reduced-15-pro-pricing-increased-rate-limits-and-more/",
+                "accessed_date": "2026-07-27",
+                "evidence": "Official post and embedded before-and-after price table."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

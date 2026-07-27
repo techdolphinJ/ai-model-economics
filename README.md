@@ -1,6 +1,6 @@
 # cost-model
 
-A cross-vendor cost calculator for AI models — for Claude Code, Codex, and any agent that reads `SKILL.md`.
+A cross-vendor reference for AI model economics — pricing, regional availability, and price history, with every number bound to an official source. Built for Claude Code, Codex, and any agent that reads `SKILL.md`.
 
 ## What this does
 
@@ -9,6 +9,10 @@ You're about to build something on an LLM, and someone asks: *how much will this
 **cost-model** answers that question properly — across **22 vendors and 54 billing SKUs** — and catches the three things that make every naive estimate wrong: forgetting rate limits, quoting compute cost as project cost, and pricing a model that's about to be retired.
 
 It doesn't just look up prices. It knows which prices you're not allowed to compare.
+
+It also records officially documented regional availability without conflating two different facts: where an account may access an API, and where a cloud route can process inference.
+
+For current-price SKUs with qualifying official evidence, it also keeps a separate historical price note: effective date, exact before/after rate, and official provenance. A SKU without that note still has a complete current-price snapshot; historical evidence is supplementary, not a coverage requirement.
 
 ## Demo
 
@@ -51,6 +55,8 @@ Notice what it does without being asked: checks whether you can even *run* the v
 - **Rate limit as a first-class axis** — flagship RPM can be 1/60th of the older tier. The cheaper tier is often the only one that can actually handle volume.
 - **Compute ≠ delivery** — forces an explicit "not included" line, so token cost never gets quoted as project cost.
 - **Prices are dated and expire** — snapshots carry a date; anything past 90 days warns before it answers.
+- **Regional availability stays source-bound** — account-country allowlists and service-deployment regions are stored as different claim types. Missing official evidence remains `pending_official_source`, never a guessed restriction.
+- **Official price-change notes where evidence exists** — historical events never overwrite current prices. They are a supplementary annotation for matching SKUs, recorded only when an official source supplies an effective date and exact before/after values; no history does not make a current price incomplete.
 
 ## Installation
 
@@ -78,6 +84,17 @@ python3 scripts/infrastructure_cost.py --sku 'p5.4xlarge' --units 24
 
 # Volcengine video generation, with rate-limit and retirement checks
 python3 scripts/video_cost.py --model seedance-2.0-mini --res 720p --duration 5 --count 200
+
+# Regional availability: official records only
+python3 scripts/regional_availability.py --list
+python3 scripts/regional_availability.py --vendor OpenAI
+python3 scripts/regional_availability.py --country CN
+
+# Optional official price-change note for a current-price SKU
+# Check this separately by SKU; it is not used in cost calculations.
+python3 scripts/pricing_history.py --list
+python3 scripts/pricing_history.py --vendor 'Moonshot AI'
+python3 scripts/pricing_history.py --sku qwen-max
 ```
 
 Or in conversation:
@@ -99,6 +116,8 @@ The agent reads the references, runs the numbers, and — this is the point — 
 | **Open-source gateways** | Groq · Together *(priced by route, never backfilled to origin vendor)* |
 | **Infrastructure** | AWS Capacity Blocks · Azure VM · GCP GPU · Alibaba PTU |
 | **Multimodal** | Volcengine full stack — text / video / image / 3D / agent / KB / rate limits |
+| **Regional availability** | The same 22 vendors, with official country-access or deployment-region records kept separate; unsupported source coverage stays explicit |
+| **Current-price annotations** | Optional official price-change notes for 19 historical SKU events across eight reviewed suppliers; absence of a note does not reduce current-price coverage |
 
 ## Under the hood
 
@@ -110,9 +129,11 @@ Progressive disclosure — `SKILL.md` is a concise method (~180 lines); prices l
 | `references/multivendor-text-api.md` | 22-vendor text API index + audit notes |
 | `references/model_prices.json` | 54 SKUs, machine-readable |
 | `references/infrastructure_prices.json` | GPU / instance / reserved throughput |
+| `references/regional_availability.json` | Official regional-availability records, claim type, route scope, and source metadata |
+| `references/pricing_history.json` | Optional official price-change annotations for a current-price snapshot: SKU events, effective dates, before/after prices, and provenance |
 | `references/volcengine.md` | Volcengine multimodal + rate limits + retirement list |
 | `references/coverage-audit.md` | What's covered, what's deliberately `null`, and the no-mixing rules |
-| `scripts/*.py` | Three calculators: text tokens, infrastructure, Volcengine video |
+| `scripts/*.py` | Three calculators, a regional-availability inspector, and an optional price-history-note inspector |
 
 Every price links to an official source. Snapshots are dated. Vendors change prices — the official page always wins.
 

@@ -1,0 +1,243 @@
+{
+  "schema_version": "1.0",
+  "snapshot_date": "2026-07-27",
+  "stale_after_days": 90,
+  "maintenance": "manual_official_source_review",
+  "scope": "Published API account-access geography and service-deployment geography. These are distinct dimensions: a service region does not by itself establish account eligibility, and a country allowlist does not by itself establish data residency.",
+  "status_definitions": {
+    "sourced": "At least one record below is backed by an official provider or cloud documentation URL.",
+    "pending_official_source": "No availability claim is made. A provider record exists only to preserve coverage parity with the pricing catalog until an official source is reviewed."
+  },
+  "providers": [
+    {
+      "vendor": "Alibaba Cloud",
+      "routes": ["Model Studio Global"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_regions",
+          "scope": "Model Studio API service deployment regions; not an account-eligibility list.",
+          "locations": ["China (Beijing)", "Singapore", "US (Virginia)", "China (Hong Kong)", "Japan (Tokyo)", "Germany (Frankfurt)"],
+          "source": {
+            "publisher": "Alibaba Cloud",
+            "title": "What is Alibaba Cloud Model Studio",
+            "url": "https://www.alibabacloud.com/help/en/model-studio/what-is-model-studio",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "Anthropic", "routes": ["Direct API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {
+      "vendor": "AWS",
+      "routes": ["Bedrock (US East/West)", "Bedrock extended access"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_regions",
+          "scope": "Amazon Bedrock inference endpoint availability; model availability varies by endpoint and model.",
+          "location_groups": ["United States", "Canada", "Europe", "Asia Pacific", "Middle East", "Africa", "South America", "AWS GovCloud (US)"],
+          "source": {
+            "publisher": "AWS",
+            "title": "Regional availability by endpoints - Amazon Bedrock",
+            "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints-region-availability.html",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Baidu",
+      "routes": ["Qianfan"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_regions",
+          "scope": "Qianfan custom-service compute-unit and deployment configuration; this does not establish a general account-country allowlist or availability for every hosted model.",
+          "locations": ["China (Beijing)", "China (Baoding)", "China (Guangzhou)", "China (Suzhou)", "China (Nanjing)"],
+          "source": {
+            "publisher": "Baidu AI Cloud",
+            "title": "Get custom service details - Qianfan AI Application Developer Center API Reference",
+            "url": "https://cloud.baidu.com/doc/qianfan-api/s/zmm1xw37v",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "Cohere", "routes": ["Direct API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {"vendor": "DeepSeek", "routes": ["Direct API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {
+      "vendor": "Google",
+      "routes": ["Gemini Developer API"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "account_access_country_allowlist",
+          "scope": "Gemini API and Google AI Studio account access.",
+          "statement": "The provider publishes the countries and territories where the Gemini API and Google AI Studio are available.",
+          "country_checks": {"CN": "not_supported", "US": "supported", "GB": "supported", "DE": "supported", "JP": "supported", "SG": "supported"},
+          "source": {
+            "publisher": "Google",
+            "title": "Available regions for Google AI Studio and Gemini API",
+            "url": "https://ai.google.dev/gemini-api/docs/available-regions",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Google Cloud",
+      "routes": ["Vertex AI Global"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_scope",
+          "scope": "Vertex AI Gemini API route represented in the pricing catalog; not an account-country eligibility statement.",
+          "locations": ["global"],
+          "source": {
+            "publisher": "Google Cloud",
+            "title": "Gemini API in Vertex AI quickstart",
+            "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstart",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "Groq", "routes": ["Cloud"], "coverage_status": "pending_official_source", "pending_reason": "No official general API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {
+      "vendor": "Microsoft",
+      "routes": ["Azure AI Foundry Global"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_regions",
+          "scope": "Foundry Models sold by Azure. Availability is model- and deployment-type-specific; the official matrix separates Global, Data Zone, Standard/Regional, Provisioned, and Batch deployments.",
+          "location_groups": ["Americas", "Europe", "Asia Pacific", "Middle East & Africa"],
+          "source": {
+            "publisher": "Microsoft",
+            "title": "Region availability for Foundry Models sold by Azure",
+            "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure-region-availability",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "MiniMax",
+      "routes": ["Direct API"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "platform_partition",
+          "scope": "MiniMax CLI configuration for API service purchased on the domestic or international platform; not a country allowlist.",
+          "locations": ["cn (domestic API service)", "global (international API service)"],
+          "source": {
+            "publisher": "MiniMax",
+            "title": "MiniMax CLI",
+            "url": "https://platform.minimaxi.com/docs/token-plan/minimax-cli",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Mistral",
+      "routes": ["Direct API"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_regions",
+          "scope": "Mistral regional inference endpoints. The global endpoint remains separate; model availability varies by region.",
+          "locations": ["EU/EFTA (available via api.eu.mistral.ai)", "United States (coming soon via api.us.mistral.ai)"],
+          "source": {
+            "publisher": "Mistral AI",
+            "title": "Regional Inference",
+            "url": "https://docs.mistral.ai/studio-api/regional-inference",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Moonshot AI",
+      "routes": ["Kimi API"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "account_access_internationalization",
+          "scope": "Kimi Open Platform onboarding and billing localization; this is not a country allowlist and does not establish API service-deployment geography.",
+          "statement": "The official changelog records launch of an i18n version and support for overseas mobile-number registration and login.",
+          "source": {
+            "publisher": "Moonshot AI",
+            "title": "Kimi Open Platform: Feature release notes",
+            "url": "https://platform.kimi.com/blog/posts/changelog",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "OpenAI",
+      "routes": ["Direct API"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "account_access_country_allowlist",
+          "scope": "OpenAI API account access.",
+          "statement": "The provider publishes supported countries and territories and states that locations absent from the list are unsupported.",
+          "country_checks": {"CN": "not_supported", "US": "supported", "GB": "supported", "DE": "supported", "JP": "supported", "SG": "supported"},
+          "source": {
+            "publisher": "OpenAI",
+            "title": "OpenAI API - Supported Countries and Territories",
+            "url": "https://help.openai.com/en/articles/5347006-openai-api-supported-countries-and-territories/",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "Perplexity", "routes": ["Sonar"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {"vendor": "SenseTime", "routes": ["SenseNova API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {"vendor": "StepFun", "routes": ["Direct API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {
+      "vendor": "Tencent Cloud",
+      "routes": ["TokenHub"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "api_access_endpoint_regions",
+          "scope": "TokenHub API network entry points. The provider explicitly states that an access endpoint does not by itself establish the actual service-deployment region or account eligibility.",
+          "locations": ["China (Guangzhou, Shanghai, Nanjing, Beijing, Chengdu, Chongqing, Hong Kong)", "Singapore", "Jakarta", "Bangkok", "Seoul", "Tokyo", "United States (Virginia, Silicon Valley)", "Brazil (Sao Paulo)", "Germany (Frankfurt)", "China financial zones (Shanghai, Shenzhen)"],
+          "statement": "The official request-structure documentation lists a nearest-region endpoint and region-specific TokenHub API endpoints for these locations.",
+          "source": {
+            "publisher": "Tencent Cloud",
+            "title": "Request structure - TokenHub Large Model Service Platform",
+            "url": "https://cloud.tencent.com/document/product/1823/132282",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "Together", "routes": ["Serverless"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {"vendor": "Volcengine", "routes": ["Ark"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []},
+    {
+      "vendor": "Zhipu AI",
+      "routes": ["BigModel China"],
+      "coverage_status": "sourced",
+      "records": [
+        {
+          "claim_type": "service_deployment_geography",
+          "scope": "Z.AI API Services, a separately documented global offering of Zhipu AI; this does not establish geography for the catalog's BigModel China route.",
+          "locations": ["Singapore (general API customer-data processing location)"],
+          "statement": "The API Services data-processing addendum states that services are generally provided from Singapore and customer data is generally processed there.",
+          "source": {
+            "publisher": "Z.AI",
+            "title": "Privacy Policy and Data Processing Addendum for API Services",
+            "url": "https://docs.z.ai/legal-agreement/privacy-policy",
+            "accessed_date": "2026-07-27"
+          }
+        }
+      ]
+    },
+    {"vendor": "xAI", "routes": ["Direct API"], "coverage_status": "pending_official_source", "pending_reason": "No official API account-access or deployment-geography source has been reviewed for this snapshot.", "records": []}
+  ]
+}
