@@ -4,6 +4,16 @@
 
 > **cost-model** — a cross-vendor reference for AI model economics
 
+## Installation
+
+```bash
+npx skills add https://github.com/techdolphinJ/ai-model-economics --skill cost-model
+```
+
+Works with Codex, Kimi Code, Gemini CLI, and other local coding agents. Send this repository's HTTPS URL to an agent and ask it to use the `cost-model` skill.
+
+> **Use the full HTTPS URL.** Do not use `techdolphinJ/ai-model-economics` shorthand; shorthand can trigger an SSH clone failure.
+
 A cross-vendor reference for AI model economics — pricing, regional availability, and price history, with every number bound to an official source. Built for Claude Code, Codex, and any agent that reads `SKILL.md`.
 
 ## What this does
