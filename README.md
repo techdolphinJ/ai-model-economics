@@ -1,5 +1,7 @@
 # ai-model-economics
 
+> **Related work:** [AI Vendor Commercialization Matrix](https://github.com/techdolphinJ/ai-vendor-commercialization-matrix) — source-bound vendor selection across pricing, compliance, ecosystem, enterprise readiness, and capability. This repo answers "what does calling AI cost"; the matrix answers "which vendor to choose."
+
 > **cost-model** — a cross-vendor reference for AI model economics
 
 A cross-vendor reference for AI model economics — pricing, regional availability, and price history, with every number bound to an official source. Built for Claude Code, Codex, and any agent that reads `SKILL.md`.
