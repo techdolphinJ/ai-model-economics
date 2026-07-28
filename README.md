@@ -1,4 +1,6 @@
-# cost-model
+# ai-model-economics
+
+> **cost-model** — a cross-vendor reference for AI model economics
 
 A cross-vendor reference for AI model economics — pricing, regional availability, and price history, with every number bound to an official source. Built for Claude Code, Codex, and any agent that reads `SKILL.md`.
 
@@ -93,7 +95,7 @@ Both examples check whether the volume can actually run, distinguish compute fro
 ## Installation
 
 ```bash
-git clone https://github.com/techdolphinJ/cost-model.git ~/.codex/skills/cost-model
+git clone https://github.com/techdolphinJ/ai-model-economics.git ~/.codex/skills/cost-model
 chmod +x ~/.codex/skills/cost-model/scripts/*.py
 ```
 
