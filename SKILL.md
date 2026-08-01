@@ -1,194 +1,180 @@
 ---
 name: cost-model
-description: AI 模型调用与 agent 运行的成本核算。当对话涉及「跑这个要多少钱」「用哪个模型划算」「token 单价」「限流 / RPM / 并发够不够」「文生视频 / 图生视频报价」「批量推理折扣」「区域可用性 / 出海能否接入」「历史调价 / 价格何时变了」「给客户报价里的 AI 算力那部分」，或任何需要把「用哪个模型」换算成「多少钱、能跑多快、官方声明在哪些地区可用、当前价是否附有可溯源的历史调价注脚」的场景时使用。含核算方法、口径规则、报价失效检查、54 个文本 API/网关 SKU、区域可用性，以及当前价格快照的 SKU 历史调价附注和 GPU、实例、预留吞吐公开快照。只要提到成本、报价、预算、划不划算、够不够跑、贵不贵、区域可用性、历史调价，就该用这个 skill——即使没明说要核算。
+description: Calculate the cost of AI model calls and agent operations. Use this skill whenever a request involves cost, pricing, budget, model choice, token rates, rate limits or concurrency, text-to-video or image-to-video pricing, batch discounts, regional availability, price-history changes, or the AI-compute portion of a customer quote. It covers the costing method, scope rules, quote-staleness checks, 54 text API and gateway SKUs, regional availability, official price-history annotations for current-price SKUs, and public GPU, instance, and reserved-throughput snapshots.
 ---
 
-# 成本核算
+# AI Model Economics
 
-把「用哪个模型」换算成「多少钱、能不能跑得动、能用多久」。
+Turn “which model should we use?” into “what will it cost, can it handle the load, where is it officially available, and how long is the pricing basis valid?”
 
-## 为什么需要这个 skill
+## Why use this skill
 
-模型报价看起来是查表，实际有三个坑，每个都会让结论错一个数量级：
+Model pricing looks like a lookup table. In practice, three mistakes can make an estimate wrong by an order of magnitude:
 
-1. **只算 token 费**，把它当成项目成本报给客户——漏掉的人工审核部分往往是算力的十几倍。
-2. **只看单价不看限流**——旗舰模型比往期档贵一倍，但 RPM 可能只有 1/60。算出来能负担，实际跑不动。
-3. **引用了已下线的 SKU**——报价当时成立，签合同时那个型号已经没了。
+1. **Treating token fees as project cost.** Human review can cost many times more than compute.
+2. **Checking unit price but not rate limits.** A flagship model can cost more while offering only 1/60 of an older tier’s RPM. A workload may be affordable but unable to run.
+3. **Quoting a retired SKU.** The price may be valid when estimated, but the model may be unavailable when the contract is signed.
 
-所以核算的顺序是：**先定口径 → 三轴都算 → 检查报价是否还有效 → 才给数**。
+Use this order: **define the scope → assess all three axes → check whether the price is still valid → give the number.**
 
----
+## Step 1: answer the three scope questions
 
-## 第一步：口径三问（不能跳）
+Before giving any number, answer these questions and state the answers in the output. Different scopes can produce estimates that differ by two orders of magnitude.
 
-给任何数字之前，先在心里答完这三问，并把答案写进输出。口径不同，同一件事的报价能差两个数量级。
+### 1. Is this compute cost or delivery cost?
 
-**1. 算的是算力成本还是交付成本？**
+- **Compute cost** = tokens + tool calls + storage + subscriptions. This is the machine bill.
+- **Delivery cost** = compute + human review + fact checking + compliance review + localization + rework. This is the operating cost.
 
-- **算力成本** = token + 工具调用 + 存储 + 订阅。机器账单。
-- **交付成本** = 算力 + 人工审核 + 事实核对 + 合规过审 + 本地化 + 返工。真实成本。
+Default to compute cost, **but explicitly list what is excluded**. In production content work, compute is often only a single-digit percentage of delivery cost. Presenting compute cost as delivery cost is the primary error this skill prevents.
 
-默认按算力成本算，**但必须显式列出没算进去的部分**。经验比例：产出类任务里算力通常只占交付成本的个位数百分比。把算力成本当交付成本报出去，是这个 skill 要防的头号错误。
+### 2. Is this one-off or ongoing?
 
-**2. 一次性还是持续跑？**
+- **One-off**: calculate the single run; rate limits are usually not the constraint.
+- **Ongoing**: calculate the monthly total and **validate rate limits** (see axis two).
 
-- 一次性 → 算单次，限流基本不是约束。
-- 持续 → 算月度总额，**并且必须校验限流**（见轴二）。
+### 3. Who will use this number?
 
-**3. 这个数给谁看？**
+- **Internal model selection**: provide a range and state assumptions.
+- **External quotation or proposal**: use only a currently offered SKU’s current price and state the snapshot date.
 
-- 内部选型 → 给区间，可以带假设。
-- 对外报价 / 写进方案 → 只能用**在架 SKU** 的**当代价格**，且必须标快照日期。
+## Step 2: assess all three axes
 
----
+### Axis 1: unit price
 
-## 第二步：三轴都要算
+Account for input price, output price, cache-hit price, and **tier conditions**.
 
-### 轴一 · 单价
+Tier conditions are easy to miss. The same model can be priced by context length, target output length, or output resolution. Determine the applicable tier before selecting a price.
 
-要素：输入价、输出价、缓存命中价，以及**分档条件**。
+Estimated output tokens must include intermediate reasoning and discarded drafts, not only final deliverable text. Reasoning tokens can be billable.
 
-分档条件是最容易漏的——同一个模型的价格可能按上下文长度、目标输出长度、输出分辨率分成好几档。先确定落在哪一档，再取价。
+### Axis 2: rate limits
 
-估算时输出 token 要**含中间推理和废稿**，不能只按最终成品字数算。推理模型的思维链是要付费的。
-
-### 轴二 · 限流（决定能不能跑，不是贵不贵）
-
-先算需求，再看档位够不够：
+Rate limits determine whether the workload can run, not whether it is cheap. Calculate demand before selecting a tier:
 
 ```
-需要的 RPM = 峰值任务数 ÷ 可用分钟数
-需要的并发 = 单任务耗时(分钟) × 需要的 RPM
+Required RPM = peak tasks ÷ available minutes
+Required concurrency = task duration (minutes) × required RPM
 ```
 
-拿这两个数去比所选 SKU 的 `最大 RPM / 最大 TPM / 最大并发`。**不够就换档，不要换成"多等一会儿"**——并发上限是硬的，等不出来。
+Compare both values with the selected SKU’s `maximum RPM / maximum TPM / maximum concurrency`. **If the tier is insufficient, change tiers; do not substitute “wait longer.”** A concurrency ceiling is hard.
 
-限流通常是**非刚性保障**（受平台负载影响）。**永远不要把限流数字当 SLA 写进对外方案。**
+Rate limits are generally non-guaranteed and can vary with platform load. **Never present a rate-limit number as an SLA in an external proposal.**
 
-### 轴三 · 生命周期
+### Axis 3: lifecycle
 
-查所用 SKU 有没有「即将下线 / 停止服务」标记。
+Check whether the SKU is marked as retiring or ending service.
 
-- 标了下线 → **不能进任何超过 6 个月的成本模型**。可以当临时算力用，但结论里必须点名，并给出在架替代 + 换算后的倍数变化。
-- 各厂商汰换节奏不同，快照文件里会记。观察到的规律：一年一代、老代不留。
+- A retiring SKU **must not enter a cost model longer than six months**. It may be temporary capacity, but name the issue in the conclusion and provide a currently offered alternative plus the cost multiplier.
+- Vendor replacement cycles differ. The snapshot files record what is publicly documented; older generations may not remain available.
 
----
+## Step 3: check whether the quote has expired
 
-## 第三步：失效检查（硬规则）
+Price snapshots decay. Check before giving any number.
 
-价格快照是会烂的。给数之前先检查：
+**Snapshot older than 90 days**: say this before the number, without omission:
 
-**快照超过 90 天** → 先说这一句，再给数，不许省略：
+> ⚠️ The <vendor> price snapshot is YYYY-MM-DD, N days old. Values are order-of-magnitude only; refresh before a formal quote.
 
-> ⚠️ 本次引用的 <厂商> 报价快照为 YYYY-MM-DD，距今 N 天。数字仅供量级参考，正式报价须重新抓取。
+**Item absent from the snapshot**: say it is absent. **Do not use an adjacent SKU as a factual substitute.** An estimate may be offered only when visibly labelled `estimate, unverified`.
 
-**快照里没有的项** → 直接说没有。**不要拿相邻 SKU 推算后当事实给出。**可以给推算值，但必须标「推算，未经核实」。
+**Vendor absent from the snapshot**: say “this skill has no snapshot for that vendor.” **Never price from memory.** Model pricing changes too quickly for remembered figures to be reliable.
 
-**问到没有快照的厂商** → 直接说「本 skill 尚无该厂商快照」。**不要凭记忆报价**——模型定价是变动最快的一类事实，记忆里的数几乎一定是旧的。
+## Regional availability: keep two questions separate
 
-## 区域可用性：先分清两个问题
+“Can an entity in this country open an account or call the API?” and “Which service region processes the request?” are different facts. Never infer one from the other.
 
-「某国能否开户/调用」与「请求由哪个服务区域处理」不是同一个事实，禁止相互推导。
+- **Account access country**: state that a country is supported or unsupported only when the vendor publishes a country or territory allowlist.
+- **Service deployment region**: a cloud region or deployment matrix proves that a service or model can be deployed there; it does not prove that an entity from every country can open an account.
+- **No public source**: return `pending_official_source`. This means the snapshot lacks a verifiable source; it does **not** mean available or unavailable.
 
-- **账户接入地**：只有厂商公开 country/territory allowlist 时，才能说某地受支持或不受支持。
-- **服务部署地**：云厂商的 region / deployment matrix 只能证明服务或模型在该区域可部署；它不证明任意国家主体都能开户。
-- **无公开来源**：输出 `pending_official_source`。这表示本快照尚未收录可核验来源，**不表示可用或不可用**。
+Read regional data only from `references/regional_availability.json`. Every confirmed record must retain an official URL, source title, and access date. Do not complete gaps with IP tests, third-party lists, or marketing articles.
 
-区域数据一律读取 `references/regional_availability.json`，每条已确认记录必须保留官方 URL、来源标题与访问日期。不要用 IP 测试、第三方清单或营销文章补全空项。
+## Pricing-history annotations do not rewrite the current snapshot
 
-## 定价历史附注：不改写当前快照
+Pricing history is an **official price-history annotation** on a current-price snapshot, not a separate coverage dimension alongside regional availability. Read current prices from `references/model_prices.json`; read `references/pricing_history.json` only for SKUs with qualifying historical evidence. Historical events must never overwrite current prices or be used to infer a previous price from a current one. No history annotation means only that no eligible official historical event is recorded; **it does not mean that current-price data is missing**.
 
-定价历史不是与区域可用性并列的覆盖维度，而是当前价格快照的**官方调价历史附注**。当前价格读取 `references/model_prices.json`；有符合条件历史证据的 SKU 再读取 `references/pricing_history.json`。历史事件不得回填当前价格，也不得把当前价倒推为“调整前价格”。没有历史附注只表示该 SKU 的当前价没有可收录的官方历史事件，**不表示当前价格数据缺失**。
+- Each SKU’s `events` array is ordered by immutable `effective_date`. Every event needs exact before/after prices, unit, official source title, URL, and access date.
+- When a source page does not provide both an effective date and exact before/after prices, retain `pending_official_source` or an empty array. This is not a gap in current-price coverage. Do not fill it with third-party reports, cached pages, adjacent SKUs, or discount percentages.
+- An official announcement that embeds an official price table can be used as same-page evidence. Record the announcement URL and label it as an embedded price table.
+- Output only when a price changed, in what unit, and from which amount to which amount. Do not infer competitive strategy or market signals.
 
-- 每个 SKU 的 `events` 是按不可变 `effective_date` 排序的数组。每个事件必须同时有精确的调整前/后价格、单位、官方来源标题、URL 与访问日期。
-- 来源页面没有同时给出生效日与前后精确价格时，保留 `pending_official_source` 或空数组；这不是当前价格快照的缺口。不以第三方报道、网页缓存、相邻 SKU 或折扣比例补齐。
-- 官方公告中嵌入的官方价目图可以作为同页证据，来源仍写公告页 URL，并明确标注为嵌入价表。
-- 输出仅陈述何时、按什么单位、从多少变为多少；不把调价解释为竞争策略或市场信号。
+Query and validate price-history annotations with:
 
-用 `scripts/pricing_history.py` 查询和验证：
-
-```
+```bash
 python3 scripts/pricing_history.py --list
 python3 scripts/pricing_history.py --vendor 'Moonshot AI'
 python3 scripts/pricing_history.py --sku qwen-max
 python3 scripts/pricing_history.py --validate
 ```
 
----
+## Required output format
 
-## 输出格式
-
-固定用这个结构。结论先行，口径和未计入项不能省。
+Use this structure. Lead with the conclusion; never omit the scope or exclusions.
 
 ```
-【成本】<一句话结论：一个数或一个区间>
+[Cost] <one-line conclusion: a number or range>
 
-口径：算力成本 / 交付成本 ｜ 一次性 / 持续
-快照：<厂商> YYYY-MM-DD（距今 N 天）
+Scope: compute cost / delivery cost | one-off / ongoing
+Snapshot: <vendor> YYYY-MM-DD (N days old)
 
-单价拆解
-| 项 | 用量 | 单价 | 小计 |
+Price breakdown
+| Item | Usage | Unit price | Subtotal |
 |---|---|---|---|
 
-限流校验
-需要 RPM ___ / 并发 ___ ｜ 所选档位上限 ___ → 够 / 不够
-（不够时给出替代档位）
+Rate-limit check
+Required RPM ___ / concurrency ___ | selected-tier maximum ___ → sufficient / insufficient
+(If insufficient, provide an alternative tier.)
 
-SKU 状态
-<型号> — 在架 / ⚠️ 即将下线（替代：___，成本 ×___）
+SKU status
+<model> — current / ⚠️ retiring (alternative: ___, cost ×___)
 
-未计入
-- <逐条列出>
+Not included
+- <list each exclusion>
 ```
 
-用量是估的就写「估」，别让估算值看起来像账单。
+If usage is estimated, mark it `estimate`; do not let an estimate look like an invoice.
 
-**单价列的精度必须让表格自己乘得通。** 内部按精确值算，但显示时若 `单价 × 用量 ≠ 小计`，对方一验算就会怀疑整张表——哪怕数字其实是对的。两种处理，选一个：单价多给两位小数，或在表下注明「单价已四舍五入，小计按精确值计」。
+**Display sufficient price precision for the table to multiply correctly.** Calculate internally with exact values, but if `unit price × usage ≠ subtotal` in the displayed table, the reader will doubt the whole estimate. Either show two more decimal places for unit price or state that the unit price is rounded and subtotals use exact values.
 
----
-
-## 通用换算
+## General conversions
 
 ```
-元/百万 token ÷ 1000 = 元/千 token
-中文 1 token ≈ 0.67 字 ｜ 1 万汉字 ≈ 1.5 万 token
-英文 1 token ≈ 0.75 词
+currency per 1M tokens ÷ 1,000 = currency per 1K tokens
+Chinese: 1 token ≈ 0.67 characters | 10,000 Chinese characters ≈ 15,000 tokens
+English: 1 token ≈ 0.75 words
 ```
 
-**便宜档和贵档差多少，用倍数表达，不要只给绝对值。** 「0.18 元 vs 3.7 元」不如「差 20 倍」有决策价值。
+Express the difference between a lower-priced and higher-priced tier as a multiplier, not only absolute values. “20× more expensive” is more decision-useful than “0.18 CNY versus 3.7 CNY.”
 
----
+## Vendor snapshot index
 
-## 厂商快照索引
-
-| 厂商 | 文件 | 快照日期 | 覆盖 |
+| Snapshot | File | Snapshot date | Coverage |
 |---|---|---|---|
-| 火山引擎方舟 | `references/volcengine.md` | 2026-07-20 | 文本 / 视频 / 图片 / 3D / 向量 / 精调 / Agent / 工具 / 知识库 / 限流 / 下线清单 |
-| 多厂商文本 API | `references/multivendor-text-api.md` | 2026-07-21 | 22 个厂商/云路由，54 个公开按量文本 SKU；单价 / 缓存 / 批处理 / 请求附加费 / 限流 / 生命周期 |
-| 云基础设施/吞吐 | `references/infrastructure_prices.json` | 2026-07-21 | AWS/Azure/GCP GPU、阿里 PTU、百度算力单元，以及华为公开价空值边界 |
-| 覆盖审计 | `references/coverage-audit.md` | 2026-07-21 | 覆盖清单、已知空值、跨路由/购买模式不混算规则 |
-| 区域可用性 | `references/regional_availability.json` | 2026-07-27 | 22 个既有供应商；账户接入地与服务部署地分开记录；无官方来源显式待补充 |
-| 当前价格调价历史附注 | `references/pricing_history.json` | 2026-07-27 | 19 个官方 SKU 调价事件；仅为有可溯源历史的当前价格附注，无附注不影响当前价覆盖 |
+| Volcengine Ark | `references/volcengine.md` | 2026-07-20 | Text / video / image / 3D / vector / fine-tuning / agent / tool / knowledge base / rate limits / retirement list |
+| Multi-vendor text API | `references/multivendor-text-api.md` | 2026-07-21 | 22 vendors and cloud routes; 54 public usage-priced text SKUs; price / cache / batch / request fees / rate limits / lifecycle |
+| Cloud infrastructure and throughput | `references/infrastructure_prices.json` | 2026-07-21 | AWS, Azure, and GCP GPUs; Alibaba PTU; Baidu compute units; Huawei public-price null boundaries |
+| Coverage audit | `references/coverage-audit.md` | 2026-07-21 | Coverage list, known nulls, and no-mixing rules across routes and purchase models |
+| Regional availability | `references/regional_availability.json` | 2026-07-27 | 22 existing suppliers; account access and service deployment recorded separately; missing official sources remain explicit |
+| Current-price history annotations | `references/pricing_history.json` | 2026-07-27 | 19 official SKU price-change events; annotations only for current prices with traceable history; no annotation does not reduce current-price coverage |
 
-机器可读的真源是 `references/model_prices.json`。它明确分开币种、路由、区域和服务档；没有写出的静态价格就是 `null`，不得以直连价、历史价或折扣比例代替。
+The machine-readable source of truth is `references/model_prices.json`. It separates currency, route, region, and service tier. An omitted static price is `null`; do not replace it with a direct price, historical price, or discount ratio.
 
-新增厂商时，照 `volcengine.md` 的结构写，头部必须有快照日期和来源链接。
+When adding a vendor, follow the structure of `references/volcengine.md`. Its header must include a snapshot date and source links.
 
----
+## Tools
 
-## 工具
+`scripts/video_cost.py` — Volcengine video-generation cost calculator. Applies the official token formula and reports rate-limit checks and SKU lifecycle status.
 
-`scripts/video_cost.py` — 火山视频生成成本计算器。按官方 token 公式算，同时输出限流校验和 SKU 下线状态。
+`scripts/model_cost.py` — multi-vendor text-token cost calculator. It calculates input, cache-hit, and output only within the same currency, route, and service tier. If no public cache price exists, it refuses to estimate.
 
-`scripts/model_cost.py` — 多厂商文本 token 成本计算器。仅计算同一币种、同一路由、同一服务档的输入 / 缓存命中 / 输出；没有公开缓存价时会拒绝估算而不是猜。
+`scripts/infrastructure_cost.py` — GPU, instance, reserved-throughput, and compute-unit calculator. It clearly marks whether a price covers the complete instance cost; an incomplete GPU-only item is not a total cost.
 
-`scripts/infrastructure_cost.py` — GPU、实例、预留吞吐与算力单元计算器。它会明确标记价格是否已覆盖完整实例成本；不完整的 GPU-only 项不能当总成本。
+`scripts/regional_availability.py` — regional-availability inspector. It shows only records confirmed by official sources; it can filter by vendor or country code, and `--validate` checks vendor coverage and source-field completeness.
 
-`scripts/regional_availability.py` — 区域可用性查询器。它只展示官方来源已确认的记录；可按厂商或国家代码查看，`--validate` 会检查供应商覆盖与来源字段完整性。
+`scripts/pricing_history.py` — current-price SKU history-annotation inspector. It shows only events with an effective date, exact before/after price, and official source. Query it separately by vendor or SKU; it does not take part in cost calculation or fill current prices. `--validate` checks event arrays, date order, and source-field completeness.
 
-`scripts/pricing_history.py` — 当前价格的 SKU 历史调价附注查询器。它只展示带生效日、精确前后价格和官方来源的事件；需与当前价格目录按 SKU 分别查阅，不参与成本计算或补全当前价。可按厂商或 SKU 查询，`--validate` 会检查事件数组、日期顺序和来源字段完整性。
-
-```
+```bash
 python3 scripts/model_cost.py --list
 python3 scripts/model_cost.py --model 'OpenAI/Direct API/gpt-5.6-terra' --input-tokens 1000000 --cached-input-tokens 400000 --output-tokens 200000 --mode batch
 python3 scripts/model_cost.py --model 'Tencent Cloud/TokenHub/hy3' --input-tokens 1000000 --cached-input-tokens 500000 --output-tokens 250000
@@ -204,22 +190,20 @@ python3 scripts/pricing_history.py --sku qwen-max
 python3 scripts/pricing_history.py --validate
 ```
 
-```
+```bash
 python3 scripts/video_cost.py --model seedance-2.0 --res 720p --duration 5
 python3 scripts/video_cost.py --model seedance-2.0-mini --res 720p --duration 5 --count 200
 python3 scripts/video_cost.py --list
 ```
 
-视频报价手算容易错（要先换算像素再套公式），能用脚本就用脚本。
+Manual video pricing is easy to get wrong because pixels must be converted before applying the formula. Use the script whenever possible.
 
----
+## Common pitfalls
 
-## 常见坑
+**Treating the default configuration as optimal.** Default parameters often land in the more expensive tier (for example, a default `max_tokens` value above a tier boundary). Check defaults during estimation; this can reduce cost severalfold.
 
-**把默认配置当最优配置。** 很多参数的默认值恰好落在贵的那一档（例如 max_tokens 默认值高于分档线）。核算时顺手检查一遍默认值，往往能直接省几倍。
+**Ignoring cache.** Cache-hit prices are often roughly one-fifth of input price. Long system prompts and fixed knowledge-base prefixes are repeated input; explicit prefix caching can save most of that cost. For every ongoing workload, ask how much input repeats on each call.
 
-**忽略缓存。** 缓存命中价通常是输入价的 1/5 左右。长 system prompt、固定知识库前缀这类重复输入，用显式前缀缓存能省大头。任何"持续跑"的核算都要问一句：这里面有多少是每次都重复的输入？
+**Treating a low unit price as low total cost.** Higher-resolution video can have a lower unit price but consume tokens faster and cost more overall. Calculate total usage; do not rank only by unit price.
 
-**把单价低当成便宜。** 高分辨率视频的**单价**可能更低，但 token 用量涨得更快，总价更高。永远算总量，不看单价排序。
-
-**拿一次的成本乘以次数。** 持续跑要考虑缓存命中率上升、批量折扣、免费额度。免费额度尤其容易漏——有些能力有每月免费额度，量小的时候实际成本是零。
+**Multiplying a one-off cost by the number of runs.** Ongoing work can gain cache hits, batch discounts, and free-tier allowances. Free allowances are especially easy to miss: some capabilities cost zero at small monthly volume.

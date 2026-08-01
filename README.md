@@ -1,10 +1,10 @@
 # ai-model-economics
 
-> **Related work:** [AI Vendor Commercialization Matrix](https://github.com/techdolphinJ/ai-vendor-commercialization-matrix) — source-bound vendor selection across pricing, compliance, ecosystem, enterprise readiness, and capability. This repo answers "what does calling AI cost"; the matrix answers "which vendor to choose."
+> **Related work — the AI go-global toolkit:** [AI Model Economics](https://github.com/techdolphinJ/ai-model-economics) (cost) → [AI Vendor Commercialization Matrix](https://github.com/techdolphinJ/ai-vendor-commercialization-matrix) (vendor selection) → [AI Go Global Compliance Map](https://github.com/techdolphinJ/ai-go-global-compliance-map) (compliance & landing).
 
 > **cost-model** — a cross-vendor reference for AI model economics
 
-## Installation
+## Install as a skill
 
 ```bash
 npx skills add https://github.com/techdolphinJ/ai-model-economics --skill cost-model
@@ -13,6 +13,15 @@ npx skills add https://github.com/techdolphinJ/ai-model-economics --skill cost-m
 Works with Codex, Kimi Code, Gemini CLI, and other local coding agents. Send this repository's HTTPS URL to an agent and ask it to use the `cost-model` skill.
 
 > **Use the full HTTPS URL.** Do not use `techdolphinJ/ai-model-economics` shorthand; shorthand can trigger an SSH clone failure.
+
+## Quick start
+
+```bash
+python3 scripts/model_cost.py --list
+python3 scripts/model_cost.py --model 'OpenAI/Direct API/gpt-5.6-terra' --input-tokens 1000000 --output-tokens 100000
+```
+
+Example output: `Cost: 4.000000 USD`.
 
 A cross-vendor reference for AI model economics — pricing, regional availability, and price history, with every number bound to an official source. Built for Claude Code, Codex, and any agent that reads `SKILL.md`.
 
@@ -36,7 +45,7 @@ Ask your agent *"We process 12 million support tickets a year. Each call uses 2,
 
 ```
 Cost: 162000.000000 USD
-Pricing basis: Anthropic/Direct API/Claude Sonnet 4.6 | standard | snapshot 2026-07-21 (6 days old)
+Pricing basis: Anthropic/Direct API/Claude Sonnet 4.6 | standard | snapshot 2026-07-21 (historical example)
 | Item | Usage | Unit price | Subtotal |
 |---|---:|---:|---:|
 | Uncached input | 24,000,000,000 tokens | 3 USD/1M tokens | 72000.000000 USD |
@@ -67,7 +76,7 @@ The same tool also handles a token-priced video workload. Ask your agent *"200 s
 ```
 Cost: 200 clips × 720p / 5.0s → **496.80 CNY**
 
-Pricing basis: compute cost | snapshot 2026-07-20 (6 days old)
+Pricing basis: compute cost | snapshot 2026-07-20 (historical example)
 
 Unit price breakdown
 | Item | Value |
@@ -104,7 +113,7 @@ Both examples check whether the volume can actually run, distinguish compute fro
 - **Regional availability stays source-bound** — account-country allowlists and service-deployment regions are stored as different claim types. Missing official evidence remains `pending_official_source`, never a guessed restriction.
 - **Official price-change notes where evidence exists** — historical events never overwrite current prices. They are a supplementary annotation for matching SKUs, recorded only when an official source supplies an effective date and exact before/after values; no history does not make a current price incomplete.
 
-## Installation
+## Clone manually
 
 ```bash
 git clone https://github.com/techdolphinJ/ai-model-economics.git ~/.codex/skills/cost-model
@@ -182,6 +191,8 @@ Progressive disclosure — `SKILL.md` is a concise method (~180 lines); prices l
 | `scripts/*.py` | Three calculators, a regional-availability inspector, and an optional price-history-note inspector |
 
 Every price links to an official source. Snapshots are dated. Vendors change prices — the official page always wins.
+
+> Not a formal quote or procurement/financial advice. Prices are snapshots and expire — verify current vendor pricing before any commercial decision.
 
 ## Why these rules
 
